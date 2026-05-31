@@ -8,6 +8,7 @@ from app.models.analysis import Analysis
 from app.schemas.analysis import AnalysisResponse, AnalysisListItem
 from app.services.pdf_service import extract_text_from_pdf
 from app.services.ats_service import calculate_ats_score
+from app.services.gemini_service import get_ai_feedback
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError
 
@@ -50,17 +51,24 @@ async def analyze_resume(
         raise HTTPException(status_code=400, detail="PDF appears to be empty or has no readable text.")
 
     # calculate ATS score
-    result = calculate_ats_score(resume_text, job_description)
+    ats_result = calculate_ats_score(resume_text, job_description)
+
+    # get AI feedback from Gemini
+    ai_feedback = get_ai_feedback(
+        resume_text=resume_text,
+        job_description=job_description,
+        ats_score=ats_result["ats_score"]
+    )
 
     # save to database
     analysis = Analysis(
         user_id=current_user.id,
         resume_text=resume_text,
         job_description=job_description,
-        ats_score=result["ats_score"],
-        matched_keywords=result["matched_keywords"],
-        missing_keywords=result["missing_keywords"],
-        ai_feedback=None
+        ats_score=ats_result["ats_score"],
+        matched_keywords=ats_result["matched_keywords"],
+        missing_keywords=ats_result["missing_keywords"],
+        ai_feedback=ai_feedback
     )
     db.add(analysis)
     db.commit()
