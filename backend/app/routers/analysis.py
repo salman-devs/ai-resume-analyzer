@@ -1,99 +1,137 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from typing import List
+
 from app.core.database import get_db
-from app.core.security import decode_token
+from app.core.deps import get_current_user
 from app.models.user import User
 from app.models.analysis import Analysis
-from app.schemas.analysis import AnalysisResponse, AnalysisListItem
+from app.schemas.analysis import AnalysisResponse, AnalysisListItem, StatsResponse
 from app.services.pdf_service import extract_text_from_pdf
 from app.services.ats_service import calculate_ats_score
-from app.services.gemini_service import get_ai_feedback
-from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError
+from app.services.ai_service import generate_ai_feedback
 
 router = APIRouter(prefix="/analysis", tags=["Analysis"])
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-    try:
-        payload = decode_token(token)
-        user = db.query(User).filter(User.id == int(payload["sub"])).first()
-        if not user:
-            raise HTTPException(status_code=401, detail="User not found")
-        return user
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+
+@router.get("/stats", response_model=StatsResponse)
+def get_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    analyses = (
+        db.query(Analysis)
+        .filter(Analysis.user_id == current_user.id)
+        .order_by(Analysis.created_at.desc())
+        .all()
+    )
+    if not analyses:
+        return StatsResponse(total=0, avg_score=0, best_score=0, latest_score=None)
+
+    scores = [a.ats_score for a in analyses]
+    return StatsResponse(
+        total=len(analyses),
+        avg_score=round(sum(scores) / len(scores)),
+        best_score=max(scores),
+        latest_score=scores[0],
+    )
+
 
 @router.post("/", response_model=AnalysisResponse, status_code=201)
 async def analyze_resume(
     file: UploadFile = File(...),
     job_description: str = Form(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
-    # validate file type
-    if not file.filename.endswith(".pdf"):
+    if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are accepted")
 
-    # validate file size (max 5MB)
     file_bytes = await file.read()
     if len(file_bytes) > 5 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="File size must be under 5MB")
 
-    # extract text from PDF
+    if not job_description.strip():
+        raise HTTPException(status_code=400, detail="Job description cannot be empty")
+
     try:
         resume_text = extract_text_from_pdf(file_bytes)
-    except Exception:
-        raise HTTPException(status_code=400, detail="Could not read PDF. Make sure it is not corrupted.")
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Could not read PDF: {exc}")
 
-    if not resume_text:
-        raise HTTPException(status_code=400, detail="PDF appears to be empty or has no readable text.")
+    if not resume_text.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="PDF appears to be empty or contains no readable text (may be image-based).",
+        )
 
-    # calculate ATS score
-    ats_result = calculate_ats_score(resume_text, job_description)
+    result = calculate_ats_score(resume_text, job_description)
 
-    # get AI feedback from Gemini
-    ai_feedback = get_ai_feedback(
-        resume_text=resume_text,
-        job_description=job_description,
-        ats_score=ats_result["ats_score"]
+    ai_feedback = generate_ai_feedback(
+        resume_text,
+        job_description,
+        result["ats_score"],
+        result["matched_keywords"],
+        result["missing_keywords"],
     )
 
-    # save to database
     analysis = Analysis(
         user_id=current_user.id,
+        filename=file.filename,
         resume_text=resume_text,
         job_description=job_description,
-        ats_score=ats_result["ats_score"],
-        matched_keywords=ats_result["matched_keywords"],
-        missing_keywords=ats_result["missing_keywords"],
-        ai_feedback=ai_feedback
+        ats_score=result["ats_score"],
+        matched_keywords=result["matched_keywords"],
+        missing_keywords=result["missing_keywords"],
+        ai_feedback=ai_feedback,
     )
     db.add(analysis)
     db.commit()
     db.refresh(analysis)
     return analysis
 
+
 @router.get("/", response_model=List[AnalysisListItem])
 def get_history(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
-    return db.query(Analysis).filter(
-        Analysis.user_id == current_user.id
-    ).order_by(Analysis.created_at.desc()).all()
+    return (
+        db.query(Analysis)
+        .filter(Analysis.user_id == current_user.id)
+        .order_by(Analysis.created_at.desc())
+        .all()
+    )
+
 
 @router.get("/{analysis_id}", response_model=AnalysisResponse)
 def get_analysis(
     analysis_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
-    analysis = db.query(Analysis).filter(
-        Analysis.id == analysis_id,
-        Analysis.user_id == current_user.id
-    ).first()
+    analysis = (
+        db.query(Analysis)
+        .filter(Analysis.id == analysis_id, Analysis.user_id == current_user.id)
+        .first()
+    )
     if not analysis:
         raise HTTPException(status_code=404, detail="Analysis not found")
     return analysis
+
+
+@router.delete("/{analysis_id}", status_code=204)
+def delete_analysis(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    analysis = (
+        db.query(Analysis)
+        .filter(Analysis.id == analysis_id, Analysis.user_id == current_user.id)
+        .first()
+    )
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    db.delete(analysis)
+    db.commit()

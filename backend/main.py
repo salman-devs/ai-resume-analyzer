@@ -1,15 +1,27 @@
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from app.core.config import settings
 from app.core.database import Base, engine
 from app.routers import auth, analysis
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s  %(levelname)s  %(name)s  %(message)s",
+)
+
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="AI Resume Analyzer")
+app = FastAPI(
+    title="AI Resume Analyzer",
+    version="1.0.0",
+    description="Upload a PDF resume and get an ATS score + AI-powered feedback.",
+)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=settings.origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -18,6 +30,12 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(analysis.router)
 
-@app.get("/")
+
+@app.get("/", tags=["Health"])
 def root():
-    return {"message": "AI Resume Analyzer API running"}
+    return {"status": "ok", "message": "AI Resume Analyzer API is running"}
+
+
+@app.get("/health", tags=["Health"])
+def health():
+    return {"status": "ok"}
