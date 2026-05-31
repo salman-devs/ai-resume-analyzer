@@ -5,17 +5,16 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-_model = None
+_client = None
 
 
-def _get_model():
-    """Lazy-load Gemini model — avoids crashing at startup if key is missing."""
-    global _model
-    if _model is None:
-        import google.generativeai as genai
-        genai.configure(api_key=settings.GEMINI_API_KEY)
-        _model = genai.GenerativeModel("gemini-1.5-flash")
-    return _model
+def _get_client():
+    """Lazy-load Gemini client — avoids crashing at startup if key is missing."""
+    global _client
+    if _client is None:
+        from google import genai
+        _client = genai.Client(api_key=settings.GEMINI_API_KEY)
+    return _client
 
 
 def _fallback(ats_score: int, missing_keywords: list) -> dict:
@@ -91,9 +90,12 @@ Return exactly this JSON structure:
 }}"""
 
     try:
-        model = _get_model()
-        response = model.generate_content(prompt)
-        return _parse_json_response(response.text)
+        client = _get_client()
+        response = client.models.generate_content(
+            model="gemini-2.0-flash-lite",
+            contents=prompt
+        )
+        return _parse_json_response(response.candidates[0].content.parts[0].text)
     except Exception as exc:
         logger.warning("Gemini AI feedback failed: %s", exc)
         return _fallback(ats_score, missing_keywords)
