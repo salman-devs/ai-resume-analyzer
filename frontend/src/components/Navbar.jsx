@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, user } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -18,6 +18,7 @@ export default function Navbar() {
           <Link to="/dashboard" style={styles.link}>Dashboard</Link>
           <Link to="/analyze" style={styles.link}>Analyze</Link>
           <Link to="/history" style={styles.link}>History</Link>
+          {user && <span style={styles.username}>👤 {user.full_name}</span>}
           <button onClick={handleLogout} style={styles.btn}>Logout</button>
         </div>
       )}
@@ -35,6 +36,7 @@ const styles = {
   },
   links: { display: "flex", gap: "1.5rem", alignItems: "center" },
   link: { color: "#cdd6f4", textDecoration: "none", fontSize: "0.95rem" },
+  username: { color: "#a6e3a1", fontSize: "0.9rem" },
   btn: {
     background: "#f38ba8", color: "white", border: "none",
     padding: "0.4rem 1rem", borderRadius: "6px", cursor: "pointer",
