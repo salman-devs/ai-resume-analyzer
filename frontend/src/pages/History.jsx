@@ -14,7 +14,8 @@ export default function History() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, e) => {
+    e.preventDefault();
     setDeleteError("");
     try {
       await api.delete(`/analysis/${id}`);
@@ -42,15 +43,17 @@ export default function History() {
       ) : (
         history.map(a => (
           <div key={a.id} style={styles.item}>
-            <div style={styles.itemInfo}>
-              <p style={styles.filename}>{a.filename}</p>
-              <p style={styles.jd}>{(a.job_description || "").substring(0, 80)}...</p>
-              <p style={styles.date}>{new Date(a.created_at).toLocaleString()}</p>
-            </div>
-            <div style={styles.itemActions}>
-              <Link to={`/history/${a.id}`} style={getScoreStyle(a.ats_score)}>{a.ats_score}%</Link>
-              <button onClick={() => handleDelete(a.id)} style={styles.deleteBtn}>Delete</button>
-            </div>
+            <Link to={`/history/${a.id}`} style={styles.itemLink}>
+              <div style={styles.itemInfo}>
+                <p style={styles.filename}>{a.filename}</p>
+                <p style={styles.jd}>{(a.job_description || "").substring(0, 80)}...</p>
+                <p style={styles.date}>{new Date(a.created_at).toLocaleString()}</p>
+              </div>
+              <div style={styles.itemScore}>
+                <span style={getScoreStyle(a.ats_score)}>{a.ats_score}%</span>
+              </div>
+            </Link>
+            <button onClick={(e) => handleDelete(a.id, e)} style={styles.deleteBtn}>Delete</button>
           </div>
         ))
       )}
@@ -65,14 +68,15 @@ const styles = {
   loading: { color: "white", textAlign: "center", marginTop: "5rem" },
   empty: { color: "#9399b2" },
   item: {
-    display: "flex", justifyContent: "space-between", alignItems: "center",
+    display: "flex", alignItems: "center",
     background: "#313244", padding: "1.25rem 1.5rem", borderRadius: "10px", marginBottom: "1rem",
   },
+  itemLink: { display: "flex", flex: 1, alignItems: "center", justifyContent: "space-between", textDecoration: "none" },
   itemInfo: { flex: 1 },
+  itemScore: { marginRight: "1rem" },
   filename: { color: "white", fontWeight: "bold", margin: "0 0 0.25rem" },
   jd: { color: "#9399b2", fontSize: "0.85rem", margin: "0 0 0.25rem" },
   date: { color: "#6c7086", fontSize: "0.8rem", margin: 0 },
-  itemActions: { display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.5rem" },
   deleteBtn: {
     background: "#f38ba820", color: "#f38ba8", border: "1px solid #f38ba8",
     padding: "0.3rem 0.75rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.85rem",
