@@ -40,7 +40,7 @@ def extract_keywords(text: str) -> Set[str]:
     # 1. extract known bigrams
     for pattern in BIGRAM_PATTERNS:
         if re.search(pattern, text_lower):
-            found.add(pattern.replace(r"\/", "/"))
+            found.add(pattern)
 
     # 2. clean and tokenize
     cleaned = re.sub(r"[^a-z0-9\+\#\.\s]", " ", text_lower)

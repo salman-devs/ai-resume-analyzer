@@ -10,6 +10,8 @@ from app.schemas.analysis import AnalysisResponse, AnalysisListItem, StatsRespon
 from app.services.pdf_service import extract_text_from_pdf
 from app.services.ats_service import calculate_ats_score
 from app.services.ai_service import generate_ai_feedback
+import asyncio
+from functools import partial
 
 router = APIRouter(prefix="/analysis", tags=["Analysis"])
 
@@ -67,12 +69,17 @@ async def analyze_resume(
 
     result = calculate_ats_score(resume_text, job_description)
 
-    ai_feedback = generate_ai_feedback(
-        resume_text,
-        job_description,
-        result["ats_score"],
-        result["matched_keywords"],
-        result["missing_keywords"],
+    loop = asyncio.get_event_loop()
+    ai_feedback = await loop.run_in_executor(
+        None,
+        partial(
+            generate_ai_feedback,
+            resume_text,
+            job_description,
+            result["ats_score"],
+            result["matched_keywords"],
+            result["missing_keywords"],
+        ),
     )
 
     analysis = Analysis(
