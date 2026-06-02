@@ -3,6 +3,7 @@ from typing import Set
 
 
 STOP_WORDS: Set[str] = {
+    # articles, prepositions, conjunctions
     "and", "or", "the", "a", "an", "in", "on", "at", "to", "for",
     "of", "with", "is", "are", "was", "were", "be", "been", "have",
     "has", "had", "do", "does", "did", "will", "would", "could",
@@ -16,6 +17,47 @@ STOP_WORDS: Set[str] = {
     "there", "here", "new", "get", "use", "work", "make", "good",
     "well", "own", "must", "need", "want", "like", "know", "look",
     "time", "year", "way", "day", "man", "us", "one", "out", "per",
+    # job description filler words
+    "looking", "join", "seeking", "hiring", "candidate", "candidates",
+    "position", "role", "opportunity", "apply", "please", "send",
+    "resume", "cv", "cover", "letter", "references", "available",
+    "immediate", "urgently", "required", "preferred", "plus", "bonus",
+    # common verbs that are not skills
+    "write", "written", "writing", "develop", "developing", "developed",
+    "design", "designing", "designed", "build", "building", "built",
+    "create", "creating", "created", "manage", "managing", "managed",
+    "lead", "leading", "led", "maintain", "maintaining", "maintained",
+    "deploy", "deploying", "deployed", "monitor", "monitoring", "monitored",
+    "collaborate", "collaborating", "collaborated", "participate", "participating",
+    "review", "reviewing", "reviewed", "solve", "solving", "solved",
+    "implement", "implementing", "implemented", "support", "supporting",
+    "ensure", "ensuring", "ensured", "provide", "providing", "provided",
+    "improve", "improving", "improved", "define", "defining", "defined",
+    "identify", "identifying", "identified", "drive", "driving", "drove",
+    # common adjectives/adverbs that are not skills
+    "strong", "excellent", "good", "great", "best", "better", "fast",
+    "clean", "clear", "simple", "complex", "large", "small", "high",
+    "low", "long", "short", "hard", "easy", "able", "similar",
+    "scalable", "reliable", "efficient", "effective", "flexible",
+    "innovative", "creative", "dynamic", "proactive", "motivated",
+    # generic nouns that are not skills
+    "experience", "skill", "skills", "knowledge", "ability", "abilities",
+    "requirement", "requirements", "responsibility", "responsibilities",
+    "qualification", "qualifications", "detail", "details", "attention",
+    "problem", "problems", "solution", "solutions", "approach", "process",
+    "team", "teams", "member", "members", "company", "organization",
+    "business", "product", "products", "service", "services", "system",
+    "systems", "application", "applications", "platform", "platforms",
+    "environment", "environments", "framework", "frameworks", "tool", "tools",
+    "language", "languages", "technology", "technologies", "methodology",
+    "methodologies", "practice", "practices", "standard", "standards",
+    "communication", "collaboration", "teamwork", "ownership", "integrity",
+    "familiar", "familiarity", "proficient", "proficiency", "understanding",
+    "including", "include", "includes", "following", "follow", "follows",
+    "least", "years", "year", "month", "months", "equivalent", "related",
+    "relevant", "current", "currently", "previous", "previously", "prior",
+    "across", "within", "between", "multiple", "various", "different",
+    "software", "engineer", "developer", "development", "engineering",
 }
 
 BIGRAM_PATTERNS = [
@@ -27,6 +69,35 @@ BIGRAM_PATTERNS = [
     r"version control", r"object oriented", r"microservices architecture",
     r"full stack", r"front end", r"back end", r"open source",
 ]
+
+# Only these are valid technical/domain keywords worth matching
+TECH_KEYWORDS: Set[str] = {
+    # languages
+    "python", "javascript", "typescript", "java", "kotlin", "swift",
+    "golang", "rust", "ruby", "php", "scala", "cpp", "csharp",
+    "html", "css", "sql", "bash", "shell", "r",
+    # frontend
+    "react", "angular", "vue", "nextjs", "redux", "tailwind",
+    "webpack", "vite", "sass", "jquery",
+    # backend
+    "fastapi", "django", "flask", "nodejs", "express", "spring",
+    "graphql", "rest", "apis", "api", "backend", "frontend",
+    # databases
+    "mysql", "postgresql", "mongodb", "redis", "sqlite", "oracle",
+    "cassandra", "elasticsearch", "firebase", "supabase",
+    # devops / cloud
+    "docker", "kubernetes", "aws", "azure", "gcp", "terraform",
+    "ansible", "jenkins", "github", "gitlab", "bitbucket", "git",
+    "linux", "nginx", "apache",
+    # ai / ml
+    "tensorflow", "pytorch", "sklearn", "pandas", "numpy", "opencv",
+    "huggingface", "llm", "nlp", "mlops",
+    # methodologies
+    "agile", "scrum", "kanban", "devops", "tdd", "bdd",
+    # other tech
+    "microservices", "serverless", "oauth", "jwt", "websocket",
+    "rabbitmq", "kafka", "celery", "airflow",
+}
 
 
 def extract_keywords(text: str) -> Set[str]:
@@ -46,10 +117,10 @@ def extract_keywords(text: str) -> Set[str]:
     cleaned = re.sub(r"[^a-z0-9\+\#\.\s]", " ", text_lower)
     words = cleaned.split()
 
-    # 3. keep meaningful tokens: length > 2, not a stop word
+    # 3. keep only tokens that are: length > 1, not a stop word, and in TECH_KEYWORDS
     for word in words:
         word = word.strip(".")
-        if len(word) > 2 and word not in STOP_WORDS:
+        if len(word) > 1 and word not in STOP_WORDS and word in TECH_KEYWORDS:
             found.add(word)
 
     return found

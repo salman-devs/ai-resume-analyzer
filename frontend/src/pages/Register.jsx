@@ -16,7 +16,12 @@ export default function Register() {
       await api.post("/auth/register", form);
       navigate("/login");
     } catch (err) {
-      setError(err.response?.data?.detail || "Registration failed");
+      const detail = err.response?.data?.detail;
+      if (Array.isArray(detail)) {
+        setError(detail.map(d => d.msg).join(", "));
+      } else {
+        setError(detail || "Registration failed");
+      }
     } finally {
       setLoading(false);
     }

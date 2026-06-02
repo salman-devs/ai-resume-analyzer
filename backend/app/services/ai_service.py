@@ -92,7 +92,7 @@ Return exactly this JSON structure:
     try:
         client = _get_client()
         response = client.models.generate_content(
-            model="gemini-2.0-flash-lite",
+            model="gemini-2.5-flash",
             contents=prompt
         )
         return _parse_json_response(response.candidates[0].content.parts[0].text)
