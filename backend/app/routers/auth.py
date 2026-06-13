@@ -16,8 +16,12 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
 
+    username_taken = db.query(User).filter(User.username == data.username).first()
+    if username_taken:
+        raise HTTPException(status_code=400, detail="Username already taken")
+
     user = User(
-        full_name=data.full_name,
+        username=data.username,
         email=data.email,
         hashed_password=hash_password(data.password),
     )
@@ -39,5 +43,4 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
 
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: User = Depends(get_current_user)):
-    """Return the currently authenticated user's profile."""
     return current_user

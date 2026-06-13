@@ -1,18 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from typing import Optional
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models.user import User
-from app.services.jobs_service import fetch_and_score_jobs
+from app.services.jobs_service import fetch_and_score_jobs, extract_job_title
 
 router = APIRouter(prefix="/jobs", tags=["Jobs"])
 
 
 @router.get("/search")
 async def search_jobs(
-    title: str = Query(..., description="Job title to search for"),
     location: str = Query("india", description="Location to search in"),
+    title: Optional[str] = Query(None, description="Override job title"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -22,16 +23,18 @@ async def search_jobs(
             detail="No resume found. Please run an analysis first before searching jobs.",
         )
 
+    job_title = title if title else extract_job_title(current_user.latest_resume_text)
+
     jobs = await fetch_and_score_jobs(
         resume_text=current_user.latest_resume_text,
-        title=title,
+        title=job_title,
         location=location,
     )
 
     if not jobs:
         raise HTTPException(
             status_code=404,
-            detail="No jobs found for your search. Try different keywords.",
+            detail="No jobs found. Try a different location.",
         )
 
-    return {"jobs": jobs, "total": len(jobs)}
+    return {"jobs": jobs, "total": len(jobs), "searched_title": job_title}

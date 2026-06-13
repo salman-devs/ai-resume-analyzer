@@ -18,7 +18,8 @@ export default function Navbar() {
           <Link to="/dashboard" style={styles.link}>Dashboard</Link>
           <Link to="/analyze" style={styles.link}>Analyze</Link>
           <Link to="/history" style={styles.link}>History</Link>
-          {user && <span style={styles.username}>👤 {user.full_name}</span>}
+          <Link to="/jobs" style={styles.link}>Find Jobs</Link>
+          {user && <span style={styles.username}>👤 {user.username}</span>}
           <button onClick={handleLogout} style={styles.btn}>Logout</button>
         </div>
       )}

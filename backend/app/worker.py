@@ -5,6 +5,7 @@ celery_app = Celery(
     "resume_analyzer",
     broker=settings.REDIS_URL,
     backend=settings.REDIS_URL,
+    include=["app.tasks"],
 )
 
 celery_app.conf.update(

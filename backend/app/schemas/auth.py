@@ -2,16 +2,16 @@ from pydantic import BaseModel, EmailStr, field_validator
 
 
 class RegisterRequest(BaseModel):
-    full_name: str
+    username: str
     email: EmailStr
     password: str
 
-    @field_validator("full_name")
+    @field_validator("username")
     @classmethod
-    def name_not_empty(cls, v: str) -> str:
+    def username_not_empty(cls, v: str) -> str:
         v = v.strip()
         if not v:
-            raise ValueError("Full name cannot be empty")
+            raise ValueError("Username cannot be empty")
         return v
 
     @field_validator("password")
@@ -34,7 +34,7 @@ class TokenResponse(BaseModel):
 
 class UserResponse(BaseModel):
     id: int
-    full_name: str
+    username: str
     email: str
 
     model_config = {"from_attributes": True}

@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import api from "../api/axios";
 
 export default function Register() {
-  const [form, setForm] = useState({ full_name: "", email: "", password: "" });
+  const [form, setForm] = useState({ username: "", email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -34,8 +34,8 @@ export default function Register() {
         <p style={styles.sub}>Start analyzing your resume today</p>
         {error && <p style={styles.error}>{error}</p>}
         <form onSubmit={handleSubmit}>
-          <input style={styles.input} type="text" placeholder="Full Name"
-            value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} required />
+          <input style={styles.input} type="text" placeholder="Username"
+            value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} required />
           <input style={styles.input} type="email" placeholder="Email"
             value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required />
           <input style={styles.input} type="password" placeholder="Password"

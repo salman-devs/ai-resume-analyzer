@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import Analyze from "./pages/Analyze";
 import History from "./pages/History";
 import AnalysisDetail from "./pages/AnalysisDetail";
+import Jobs from "./pages/Jobs";
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
           <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
           <Route path="/history/:id" element={<ProtectedRoute><AnalysisDetail /></ProtectedRoute>} />
           <Route path="/" element={<Navigate to="/dashboard" />} />
+          <Route path="/jobs" element={<ProtectedRoute><Jobs /></ProtectedRoute>} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

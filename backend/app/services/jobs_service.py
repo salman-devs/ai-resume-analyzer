@@ -8,6 +8,23 @@ logger = logging.getLogger(__name__)
 ADZUNA_BASE_URL = "https://api.adzuna.com/v1/api/jobs"
 
 
+def extract_job_title(resume_text: str) -> str:
+    """Extract most relevant job title from resume text."""
+    titles = [
+        "python developer", "backend developer", "frontend developer",
+        "full stack developer", "software engineer", "data scientist",
+        "data analyst", "machine learning engineer", "devops engineer",
+        "react developer", "node developer", "java developer",
+        "mobile developer", "android developer", "ios developer",
+        "cloud engineer", "web developer", "software developer",
+    ]
+    resume_lower = resume_text.lower()
+    for title in titles:
+        if title in resume_lower:
+            return title
+    return "software developer"
+
+
 async def fetch_and_score_jobs(
     resume_text: str,
     title: str,
