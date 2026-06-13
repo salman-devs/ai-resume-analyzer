@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str
     ALLOWED_ORIGINS: str = "http://localhost:5173"
     REDIS_URL: str = "redis://localhost:6379/0"
+    ADZUNA_APP_ID: str = ""
+    ADZUNA_APP_KEY: str = ""
 
     @property
     def origins(self) -> List[str]:

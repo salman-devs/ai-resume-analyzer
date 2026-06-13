@@ -76,6 +76,10 @@ async def analyze_resume(
     )
     ai_feedback = task.get(timeout=30)
 
+    # save latest resume text to user profile
+    current_user.latest_resume_text = resume_text
+    db.add(current_user)
+
     analysis = Analysis(
         user_id=current_user.id,
         filename=file.filename,
