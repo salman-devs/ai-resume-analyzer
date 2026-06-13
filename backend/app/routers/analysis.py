@@ -9,9 +9,7 @@ from app.models.analysis import Analysis
 from app.schemas.analysis import AnalysisResponse, AnalysisListItem, StatsResponse
 from app.services.pdf_service import extract_text_from_pdf
 from app.services.ats_service import calculate_ats_score
-from app.services.ai_service import generate_ai_feedback
-import asyncio
-from functools import partial
+from app.tasks import run_ai_feedback
 
 router = APIRouter(prefix="/analysis", tags=["Analysis"])
 
@@ -64,23 +62,19 @@ async def analyze_resume(
     if not resume_text.strip():
         raise HTTPException(
             status_code=400,
-            detail="PDF appears to be empty or contains no readable text (may be image-based).",
+            detail="PDF appears to be empty or contains no readable text.",
         )
 
     result = calculate_ats_score(resume_text, job_description)
 
-    loop = asyncio.get_event_loop()
-    ai_feedback = await loop.run_in_executor(
-        None,
-        partial(
-            generate_ai_feedback,
-            resume_text,
-            job_description,
-            result["ats_score"],
-            result["matched_keywords"],
-            result["missing_keywords"],
-        ),
+    task = run_ai_feedback.delay(
+        resume_text,
+        job_description,
+        result["ats_score"],
+        result["matched_keywords"],
+        result["missing_keywords"],
     )
+    ai_feedback = task.get(timeout=30)
 
     analysis = Analysis(
         user_id=current_user.id,

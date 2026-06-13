@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     GEMINI_API_KEY: str
     ALLOWED_ORIGINS: str = "http://localhost:5173"
+    REDIS_URL: str = "redis://localhost:6379/0"
 
     @property
     def origins(self) -> List[str]:
