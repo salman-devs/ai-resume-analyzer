@@ -51,8 +51,7 @@ async def analyze_resume(
     if len(file_bytes) > 5 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="File size must be under 5MB")
 
-    if not job_description.strip():
-        raise HTTPException(status_code=400, detail="Job description cannot be empty")
+    job_description = job_description.strip() if job_description else ""
 
     try:
         resume_text = extract_text_from_pdf(file_bytes)
@@ -65,16 +64,31 @@ async def analyze_resume(
             detail="PDF appears to be empty or contains no readable text.",
         )
 
-    result = calculate_ats_score(resume_text, job_description)
-
-    task = run_ai_feedback.delay(
-        resume_text,
-        job_description,
-        result["ats_score"],
-        result["matched_keywords"],
-        result["missing_keywords"],
-    )
-    ai_feedback = task.get(timeout=30)
+    if job_description:
+        result = calculate_ats_score(resume_text, job_description)
+        task = run_ai_feedback.delay(
+            resume_text,
+            job_description,
+            result["ats_score"],
+            result["matched_keywords"],
+            result["missing_keywords"],
+        )
+        ai_feedback = task.get(timeout=30)
+        ats_score = result["ats_score"]
+        matched_keywords = result["matched_keywords"]
+        missing_keywords = result["missing_keywords"]
+    else:
+        ats_score = 0
+        matched_keywords = []
+        missing_keywords = []
+        ai_feedback = {
+            "overall_assessment": "Resume saved successfully. No job description provided.",
+            "strengths": [],
+            "improvements": [],
+            "keyword_tips": "",
+            "formatting_tips": "",
+            "score_breakdown": {"keyword_match": 0, "estimated_readability": 0, "estimated_relevance": 0},
+        }
 
     # save latest resume text to user profile
     current_user.latest_resume_text = resume_text
@@ -85,9 +99,9 @@ async def analyze_resume(
         filename=file.filename,
         resume_text=resume_text,
         job_description=job_description,
-        ats_score=result["ats_score"],
-        matched_keywords=result["matched_keywords"],
-        missing_keywords=result["missing_keywords"],
+        ats_score=ats_score,
+        matched_keywords=matched_keywords,
+        missing_keywords=missing_keywords,
         ai_feedback=ai_feedback,
     )
     db.add(analysis)

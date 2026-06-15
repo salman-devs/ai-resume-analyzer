@@ -1,5 +1,6 @@
 import httpx
 import logging
+import re
 from app.core.config import settings
 from app.services.ats_service import calculate_ats_score
 
@@ -7,9 +8,41 @@ logger = logging.getLogger(__name__)
 
 ADZUNA_BASE_URL = "https://api.adzuna.com/v1/api/jobs"
 
+SENIOR_PATTERNS = [
+    r"\b(\d+)\+?\s*years?\s*(of\s*)?(experience|exp)\b",
+    r"\bsenior\b", r"\bsr\.\b", r"\blead\b", r"\bprincipal\b",
+    r"\bstaff engineer\b", r"\bhead of\b", r"\bdirector\b",
+    r"\b5\+\s*years\b", r"\b6\+\s*years\b", r"\b7\+\s*years\b",
+    r"\b8\+\s*years\b", r"\b10\+\s*years\b",
+]
+
+FRESHER_SIGNALS = [
+    "fresher", "fresh graduate", "entry level", "entry-level",
+    "0-1 year", "0 year", "no experience", "recent graduate",
+    "junior", "trainee", "intern", "graduate",
+]
+
+
+def is_fresher_resume(resume_text: str) -> bool:
+    resume_lower = resume_text.lower()
+    return any(signal in resume_lower for signal in FRESHER_SIGNALS)
+
+
+def is_senior_job(job_description: str) -> bool:
+    desc_lower = job_description.lower()
+    for pattern in SENIOR_PATTERNS:
+        match = re.search(pattern, desc_lower)
+        if match:
+            if pattern.startswith(r"\b(\d+)"):
+                years = int(match.group(1))
+                if years >= 3:
+                    return True
+            else:
+                return True
+    return False
+
 
 def extract_job_title(resume_text: str) -> str:
-    """Extract most relevant job title from resume text."""
     titles = [
         "python developer", "backend developer", "frontend developer",
         "full stack developer", "software engineer", "data scientist",
@@ -53,6 +86,7 @@ async def fetch_and_score_jobs(
         return []
 
     jobs = data.get("results", [])
+    fresher = is_fresher_resume(resume_text)
     scored_jobs = []
 
     for job in jobs:
@@ -68,6 +102,10 @@ async def fetch_and_score_jobs(
 
         score_result = calculate_ats_score(resume_text, description)
         match_score = score_result["ats_score"]
+
+        # penalize senior jobs for fresher resumes
+        if fresher and is_senior_job(description):
+            match_score = max(0, match_score - 30)
 
         scored_jobs.append({
             "title": title_text,
