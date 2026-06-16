@@ -19,6 +19,9 @@ export default function Navbar() {
           <Link to="/analyze" style={styles.link}>Analyze</Link>
           <Link to="/history" style={styles.link}>History</Link>
           <Link to="/jobs" style={styles.link}>Find Jobs</Link>
+          {user?.is_admin && (
+            <Link to="/admin" style={styles.adminLink}>Admin</Link>
+          )}
           {user && <span style={styles.username}>👤 {user.username}</span>}
           <button onClick={handleLogout} style={styles.btn}>Logout</button>
         </div>
@@ -37,6 +40,7 @@ const styles = {
   },
   links: { display: "flex", gap: "1.5rem", alignItems: "center" },
   link: { color: "#cdd6f4", textDecoration: "none", fontSize: "0.95rem" },
+  adminLink: { color: "#f9e2af", textDecoration: "none", fontSize: "0.95rem", fontWeight: "600" },
   username: { color: "#a6e3a1", fontSize: "0.9rem" },
   btn: {
     background: "#f38ba8", color: "white", border: "none",
