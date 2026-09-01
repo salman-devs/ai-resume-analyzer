@@ -99,3 +99,36 @@ Return exactly this JSON structure:
     except Exception as exc:
         logger.warning("Gemini AI feedback failed: %s", exc)
         return _fallback(ats_score, missing_keywords)
+
+
+def generate_interview_questions(parsed_resume: dict, job_description: str) -> list:
+    """Use Gemini to generate interview questions based on structured resume data and the job description."""
+
+    prompt = f"""You are an experienced technical interviewer.
+Generate 5 interview questions for this candidate based ONLY on their actual background below and the job description.
+Do NOT invent skills, companies, or experience not listed.
+Respond with ONLY a JSON array of strings — no markdown, no explanation.
+
+CANDIDATE SKILLS: {", ".join(parsed_resume.get("skills", []))}
+CANDIDATE EXPERIENCE: {json.dumps(parsed_resume.get("experience", []))}
+CANDIDATE PROJECTS: {json.dumps(parsed_resume.get("projects", []))}
+
+JOB DESCRIPTION (first 1500 chars):
+{job_description[:1500]}
+
+Return exactly this JSON structure:
+["<question 1>", "<question 2>", "<question 3>", "<question 4>", "<question 5>"]"""
+
+    try:
+        client = _get_client()
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt
+        )
+        questions = _parse_json_response(response.candidates[0].content.parts[0].text)
+        if not isinstance(questions, list):
+            raise ValueError("Expected a JSON array")
+        return questions
+    except Exception as exc:
+        logger.warning("Interview question generation failed: %s", exc)
+        return []
