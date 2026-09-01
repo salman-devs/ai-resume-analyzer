@@ -67,6 +67,26 @@ export default function AnalysisDetail() {
           </div>
         </div>
       </div>
+            {analysis.skill_gap && (
+        <div style={styles.keywordsGrid}>
+          <div style={styles.keywordCard}>
+            <h3 style={{ color: "#a6e3a1" }}>✓ Matching Skills ({analysis.skill_gap.matching_skills.length})</h3>
+            <div style={styles.tags}>
+              {analysis.skill_gap.matching_skills.map(s => (
+                <span key={s} style={{ ...styles.tag, background: "#a6e3a120", color: "#a6e3a1" }}>{s}</span>
+              ))}
+            </div>
+          </div>
+          <div style={styles.keywordCard}>
+            <h3 style={{ color: "#f38ba8" }}>✗ Missing Skills ({analysis.skill_gap.missing_skills.length})</h3>
+            <div style={styles.tags}>
+              {analysis.skill_gap.missing_skills.map(s => (
+                <span key={s} style={{ ...styles.tag, background: "#f38ba820", color: "#f38ba8" }}>{s}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {fb && (
         <div style={styles.feedbackCard}>
