@@ -33,7 +33,7 @@ def cosine_similarity(vec_a: np.ndarray, vec_b: np.ndarray) -> float:
     if norm == 0:
         return 0.0
     similarity = dot / norm
-    return round(((similarity + 1) / 2) * 100, 2)
+    return round(float((similarity + 1) / 2) * 100, 2)
 
 
 def semantic_similarity(text_a: str, text_b: str) -> float:
