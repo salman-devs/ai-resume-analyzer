@@ -38,8 +38,8 @@ export default function Analyze() {
       <div style={styles.card}>
         <form onSubmit={handleSubmit}>
           <div style={styles.field}>
-            <label style={styles.label}>Upload Resume (PDF)</label>
-            <input type="file" accept=".pdf"
+            <label style={styles.label}>Upload Resume (PDF or DOCX)</label>
+            <input type="file" accept=".pdf,.docx"
               onChange={e => setFile(e.target.files[0])}
               style={styles.fileInput} required />
           </div>
@@ -62,7 +62,7 @@ export default function Analyze() {
         <div style={styles.results}>
           <div style={styles.scoreCard}>
             <p style={styles.scoreNum}>{result.ats_score}%</p>
-            <p style={styles.scoreLabel}>ATS Match Score</p>
+            <p style={styles.scoreLabel}>Job Match Score</p>
           </div>
 
           <div style={styles.keywordsGrid}>
