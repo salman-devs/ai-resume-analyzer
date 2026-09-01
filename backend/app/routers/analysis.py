@@ -13,6 +13,10 @@ from app.services.ats_service import calculate_ats_score
 from app.tasks import run_ai_feedback
 from app.services.resume_parser_service import parse_resume
 
+from app.services.job_description_parser import parse_job_description
+from app.services.matching_service import calculate_hybrid_match
+from app.services.skill_gap_service import analyze_skill_gap
+
 router = APIRouter(prefix="/analysis", tags=["Analysis"])
 
 
@@ -60,18 +64,30 @@ async def analyze_resume(
         parsed_resume = None
 
     if job_description:
-        result = calculate_ats_score(resume_text, job_description)
+        match_result = calculate_hybrid_match(resume_text, job_description)
+        ats_score = match_result["hybrid_score"]
+        matched_keywords = match_result["matched_keywords"]
+        missing_keywords = match_result["missing_keywords"]
+
         task = run_ai_feedback.delay(
             resume_text,
             job_description,
-            result["ats_score"],
-            result["matched_keywords"],
-            result["missing_keywords"],
+            ats_score,
+            matched_keywords,
+            missing_keywords,
         )
         ai_feedback = task.get(timeout=30)
-        ats_score = result["ats_score"]
-        matched_keywords = result["matched_keywords"]
-        missing_keywords = result["missing_keywords"]
+
+        try:
+            parsed_jd = parse_job_description(job_description)
+            skill_gap = analyze_skill_gap(
+                resume_skills=parsed_resume.get("skills", []) if parsed_resume else [],
+                required_skills=parsed_jd.required_skills,
+                preferred_skills=parsed_jd.preferred_skills,
+            )
+        except Exception as exc:
+            logging.getLogger(__name__).warning("JD parsing/skill gap failed, continuing without it: %s", exc)
+            skill_gap = None
     else:
         ats_score = 0
         matched_keywords = []
@@ -99,6 +115,7 @@ async def analyze_resume(
         missing_keywords=missing_keywords,
         ai_feedback=ai_feedback,
         parsed_resume = parsed_resume,
+        skill_gap=skill_gap,
     )
     db.add(analysis)
     db.commit()
