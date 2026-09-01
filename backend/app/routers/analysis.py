@@ -7,7 +7,7 @@ from app.core.deps import get_current_user
 from app.models.user import User
 from app.models.analysis import Analysis
 from app.schemas.analysis import AnalysisResponse, AnalysisListItem, StatsResponse
-from app.services.pdf_service import extract_text_from_pdf
+from app.services.pdf_service import validate_and_extract_resume, ResumeValidationError
 from app.services.ats_service import calculate_ats_score
 from app.tasks import run_ai_feedback
 
@@ -44,25 +44,13 @@ async def analyze_resume(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    if not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Only PDF files are accepted")
-
     file_bytes = await file.read()
-    if len(file_bytes) > 5 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="File size must be under 5MB")
-
     job_description = job_description.strip() if job_description else ""
 
     try:
-        resume_text = extract_text_from_pdf(file_bytes)
-    except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"Could not read PDF: {exc}")
-
-    if not resume_text.strip():
-        raise HTTPException(
-            status_code=400,
-            detail="PDF appears to be empty or contains no readable text.",
-        )
+        resume_text = validate_and_extract_resume(file.filename, file_bytes)
+    except ResumeValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
 
     if job_description:
         result = calculate_ats_score(resume_text, job_description)
