@@ -25,6 +25,7 @@ export default function AnalysisDetail() {
   );
 
   const fb = analysis.ai_feedback;
+  const pr = analysis.parsed_resume;
 
   return (
     <div style={styles.container}>
@@ -67,7 +68,8 @@ export default function AnalysisDetail() {
           </div>
         </div>
       </div>
-            {analysis.skill_gap && (
+
+      {analysis.skill_gap && (
         <div style={styles.keywordsGrid}>
           <div style={styles.keywordCard}>
             <h3 style={{ color: "#a6e3a1" }}>✓ Matching Skills ({analysis.skill_gap.matching_skills.length})</h3>
@@ -85,6 +87,80 @@ export default function AnalysisDetail() {
               ))}
             </div>
           </div>
+        </div>
+      )}
+
+      {pr && (
+        <div style={styles.feedbackCard}>
+          <h3 style={styles.feedbackTitle}>Parsed Resume</h3>
+
+          {pr.full_name && <p style={styles.assessment}><strong>Name:</strong> {pr.full_name}</p>}
+          {pr.email && <p style={styles.assessment}><strong>Email:</strong> {pr.email}</p>}
+          {pr.phone && <p style={styles.assessment}><strong>Phone:</strong> {pr.phone}</p>}
+
+          {pr.skills?.length > 0 && (
+            <>
+              <h4 style={styles.feedbackSub}>Skills</h4>
+              <div style={styles.tags}>
+                {pr.skills.map((s, i) => (
+                  <span key={i} style={{ ...styles.tag, background: "#89b4fa20", color: "#89b4fa" }}>{s}</span>
+                ))}
+              </div>
+            </>
+          )}
+
+          {pr.experience?.length > 0 && (
+            <>
+              <h4 style={styles.feedbackSub}>Experience</h4>
+              <ul style={styles.list}>
+                {pr.experience.map((e, i) => (
+                  <li key={i}>
+                    <strong>{e.title}</strong> at {e.company}
+                    {(e.start_date || e.end_date) && ` (${e.start_date || "?"} – ${e.end_date || "present"})`}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
+          {pr.education?.length > 0 && (
+            <>
+              <h4 style={styles.feedbackSub}>Education</h4>
+              <ul style={styles.list}>
+                {pr.education.map((ed, i) => (
+                  <li key={i}>
+                    {ed.degree ? `${ed.degree}` : ""}{ed.field_of_study ? ` in ${ed.field_of_study}` : ""}
+                    {ed.degree || ed.field_of_study ? " — " : ""}{ed.institution}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
+          {pr.projects?.length > 0 && (
+            <>
+              <h4 style={styles.feedbackSub}>Projects</h4>
+              <ul style={styles.list}>
+                {pr.projects.map((p, i) => (
+                  <li key={i}>
+                    <strong>{p.name}</strong>
+                    {p.description && ` — ${p.description}`}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
+          {pr.certifications?.length > 0 && (
+            <>
+              <h4 style={styles.feedbackSub}>Certifications</h4>
+              <ul style={styles.list}>
+                {pr.certifications.map((c, i) => (
+                  <li key={i}>{c.name}{c.issuer && ` — ${c.issuer}`}</li>
+                ))}
+              </ul>
+            </>
+          )}
         </div>
       )}
 
