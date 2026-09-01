@@ -35,6 +35,18 @@ export default function AnalysisDetail() {
       <div style={styles.scoreCard}>
         <p style={styles.scoreNum}>{analysis.ats_score}%</p>
         <p style={styles.scoreLabel}>Job Match Score</p>
+        {analysis.keyword_score != null && analysis.semantic_score != null && (
+          <div style={styles.scoreBreakdown}>
+            <div style={styles.scoreBreakdownItem}>
+              <span style={styles.scoreBreakdownLabel}>Keyword Match</span>
+              <span style={styles.scoreBreakdownValue}>{analysis.keyword_score}%</span>
+            </div>
+            <div style={styles.scoreBreakdownItem}>
+              <span style={styles.scoreBreakdownLabel}>Semantic Match</span>
+              <span style={styles.scoreBreakdownValue}>{analysis.semantic_score}%</span>
+            </div>
+          </div>
+        )}
       </div>
 
       <div style={styles.keywordsGrid}>
@@ -107,4 +119,8 @@ const styles = {
   jdText: { color: "#9399b2", lineHeight: 1.7, whiteSpace: "pre-wrap" },
   actions: { textAlign: "center", marginBottom: "2rem" },
   btn: { padding: "0.75rem 2rem", background: "#89b4fa", color: "#1e1e2e", border: "none", borderRadius: "6px", fontWeight: "bold", cursor: "pointer", fontSize: "1rem" },
+  scoreBreakdown: { display: "flex", justifyContent: "center", gap: "2rem", marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid #45475a" },
+  scoreBreakdownItem: { display: "flex", flexDirection: "column", alignItems: "center", gap: "0.25rem" },
+  scoreBreakdownLabel: { color: "#9399b2", fontSize: "0.8rem" },
+  scoreBreakdownValue: { color: "#cdd6f4", fontSize: "1.1rem", fontWeight: "bold" },
 };
