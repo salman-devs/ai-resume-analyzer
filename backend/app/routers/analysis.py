@@ -66,6 +66,8 @@ async def analyze_resume(
     if job_description:
         match_result = calculate_hybrid_match(resume_text, job_description)
         ats_score = match_result["hybrid_score"]
+        keyword_score = match_result["keyword_score"]
+        semantic_score = round(match_result["semantic_score"])
         matched_keywords = match_result["matched_keywords"]
         missing_keywords = match_result["missing_keywords"]
 
@@ -91,6 +93,8 @@ async def analyze_resume(
     else:
         skill_gap=None
         ats_score = 0
+        keyword_score=0
+        semantic_score=0
         matched_keywords = []
         missing_keywords = []
         ai_feedback = {
@@ -117,6 +121,8 @@ async def analyze_resume(
         ai_feedback=ai_feedback,
         parsed_resume = parsed_resume,
         skill_gap=skill_gap,
+        keyword_score=keyword_score,
+        semantic_score=semantic_score,
     )
     db.add(analysis)
     db.commit()

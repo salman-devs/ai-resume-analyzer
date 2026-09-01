@@ -19,5 +19,7 @@ class Analysis(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     parsed_resume =Column(JSON, nullable=True)
     skill_gap = Column(JSON, nullable=True)
+    keyword_score = Column(Integer, nullable=True)
+    semantic_score = Column(Integer, nullable=True)
 
     user = relationship("User", back_populates="analyses")

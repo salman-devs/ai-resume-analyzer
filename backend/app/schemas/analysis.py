@@ -14,6 +14,8 @@ class AnalysisResponse(BaseModel):
     skill_gap: Optional[Any]=None
     job_description: str
     created_at: datetime
+    keyword_score: Optional[int] = None
+    semantic_score: Optional[int] = None
 
     model_config = {"from_attributes": True}
 

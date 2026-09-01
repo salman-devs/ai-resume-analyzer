@@ -34,7 +34,7 @@ export default function AnalysisDetail() {
 
       <div style={styles.scoreCard}>
         <p style={styles.scoreNum}>{analysis.ats_score}%</p>
-        <p style={styles.scoreLabel}>ATS Match Score</p>
+        <p style={styles.scoreLabel}>Job Match Score</p>
       </div>
 
       <div style={styles.keywordsGrid}>
