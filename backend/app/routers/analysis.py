@@ -89,6 +89,7 @@ async def analyze_resume(
             logging.getLogger(__name__).warning("JD parsing/skill gap failed, continuing without it: %s", exc)
             skill_gap = None
     else:
+        skill_gap=None
         ats_score = 0
         matched_keywords = []
         missing_keywords = []

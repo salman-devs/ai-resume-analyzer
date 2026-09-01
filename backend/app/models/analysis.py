@@ -18,5 +18,6 @@ class Analysis(Base):
     ai_feedback = Column(JSON, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     parsed_resume =Column(JSON, nullable=True)
+    skill_gap = Column(JSON, nullable=True)
 
     user = relationship("User", back_populates="analyses")

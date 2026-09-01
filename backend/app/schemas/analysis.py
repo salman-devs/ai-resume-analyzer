@@ -11,6 +11,7 @@ class AnalysisResponse(BaseModel):
     missing_keywords: List[str]
     ai_feedback: Optional[Any] = None
     parsed_resume: Optional[Any] = None
+    skill_gap: Optional[Any]=None
     job_description: str
     created_at: datetime
 
