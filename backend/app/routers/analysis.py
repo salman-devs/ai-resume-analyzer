@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from typing import List
 
+import logging
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models.user import User
@@ -10,6 +11,7 @@ from app.schemas.analysis import AnalysisResponse, AnalysisListItem, StatsRespon
 from app.services.pdf_service import validate_and_extract_resume, ResumeValidationError
 from app.services.ats_service import calculate_ats_score
 from app.tasks import run_ai_feedback
+from app.services.resume_parser_service import parse_resume
 
 router = APIRouter(prefix="/analysis", tags=["Analysis"])
 
@@ -51,6 +53,11 @@ async def analyze_resume(
         resume_text = validate_and_extract_resume(file.filename, file_bytes)
     except ResumeValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
+    try:
+        parsed_resume = parse_resume(resume_text).model_dump()
+    except Exception as exc:
+        logging.getLogger(__name__).warning("Resume parsing failed, continuing without it: %s", exc)
+        parsed_resume = None
 
     if job_description:
         result = calculate_ats_score(resume_text, job_description)
@@ -91,6 +98,7 @@ async def analyze_resume(
         matched_keywords=matched_keywords,
         missing_keywords=missing_keywords,
         ai_feedback=ai_feedback,
+        parsed_resume = parsed_resume,
     )
     db.add(analysis)
     db.commit()
